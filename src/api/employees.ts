@@ -126,8 +126,20 @@ export const salariesApi = {
     getMonthlyStats: async (month: string) => {
         await delay(300);
         const monthly = salaries.filter(s => s.month === month);
-        const total = monthly.reduce((acc, curr) => acc + curr.amountPaid, 0);
-        return { success: true, data: { month, totalPaid: total, count: monthly.length } };
+        const totalPaid = monthly.reduce((acc, curr) => acc + curr.amountPaid, 0);
+        const totalBonus = monthly.reduce((acc, curr) => acc + (curr.bonus || 0), 0);
+        const totalPenalty = monthly.reduce((acc, curr) => acc + (curr.penalty || 0), 0);
+
+        return {
+            success: true,
+            data: {
+                month,
+                totalPaid,
+                totalBonus,
+                totalPenalty,
+                paymentsCount: monthly.length
+            }
+        };
     },
 
     create: async (data: CreateSalaryRequest): Promise<{ success: boolean; data: SalaryPayment }> => {
