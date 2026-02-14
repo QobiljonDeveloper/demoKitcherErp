@@ -120,12 +120,16 @@ export function CashPage() {
 
     const queryParams = useMemo(() => ({
         type: activeTab === 'ALL' ? undefined : activeTab,
-        limit: 1000,
-    }), [activeTab]);
+        page: pagination.pageIndex + 1, // API is 1-indexed
+        limit: pagination.pageSize,
+    }), [activeTab, pagination.pageIndex, pagination.pageSize]);
 
     const { data: cashData, isLoading, isError, refetch } = useCashTransactions(queryParams);
 
-    // NO useEffect for pagination reset - handled by autoResetPageIndex or key
+    // Reset pagination when tab changes
+    useEffect(() => {
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    }, [activeTab]);
 
     const createMutation = useCreateCashTransaction();
     const deleteMutation = useDeleteCashTransaction();
@@ -235,12 +239,12 @@ export function CashPage() {
     const table = useReactTable({
         data: cashData?.data || [],
         columns,
+        pageCount: cashData?.totalPages || -1,
+        manualPagination: true,
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onPaginationChange: setPagination,
-        autoResetPageIndex: true, // Automatically reset page index on data change
         state: {
             sorting,
             pagination,
@@ -293,7 +297,7 @@ export function CashPage() {
 
             <div className="mt-4">
                 <div className="rounded-md border bg-card">
-                    <Table key={activeTab}> {/* Force remount on tab change */}
+                    <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
