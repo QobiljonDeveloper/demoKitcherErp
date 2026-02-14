@@ -125,10 +125,7 @@ export function CashPage() {
 
     const { data: cashData, isLoading, isError, refetch } = useCashTransactions(queryParams);
 
-    // Reset pagination when tab changes
-    useEffect(() => {
-        setPagination(prev => ({ ...prev, pageIndex: 0 }));
-    }, [activeTab]);
+    // NO useEffect for pagination reset - handled by autoResetPageIndex or key
 
     const createMutation = useCreateCashTransaction();
     const deleteMutation = useDeleteCashTransaction();
@@ -243,6 +240,7 @@ export function CashPage() {
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onPaginationChange: setPagination,
+        autoResetPageIndex: true, // Automatically reset page index on data change
         state: {
             sorting,
             pagination,
@@ -295,7 +293,7 @@ export function CashPage() {
 
             <div className="mt-4">
                 <div className="rounded-md border bg-card">
-                    <Table>
+                    <Table key={activeTab}> {/* Force remount on tab change */}
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
