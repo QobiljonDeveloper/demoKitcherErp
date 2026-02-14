@@ -101,6 +101,14 @@ export const employeesApi = {
     },
 };
 
+export interface SalaryStats {
+    month: string;
+    totalPaid: number;
+    totalBonus: number;
+    totalPenalty: number;
+    paymentsCount: number;
+}
+
 export const salariesApi = {
     getAll: async (query: { page?: number; limit?: number; month?: string; employeeId?: string } = {}) => {
         await delay(400);
@@ -123,7 +131,7 @@ export const salariesApi = {
         };
     },
 
-    getMonthlyStats: async (month: string) => {
+    getMonthlyStats: async (month: string): Promise<{ success: boolean; data: SalaryStats }> => {
         await delay(300);
         const monthly = salaries.filter(s => s.month === month);
         const totalPaid = monthly.reduce((acc, curr) => acc + curr.amountPaid, 0);
