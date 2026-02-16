@@ -6,3 +6,4 @@ export { CashPage } from './CashPage';
 export { EmployeesPage } from './EmployeesPage';
 export { SalariesPage } from './SalariesPage';
 export { ReportsPage } from './ReportsPage';
+export { UtilitiesPage } from './UtilitiesPage';

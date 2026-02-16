@@ -1,8 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Lightbulb } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChartCard, LineChartCard, ChartSkeleton } from '@/components/charts';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,16 +59,25 @@ export function DashboardPage() {
                         Xodim qo'shish
                     </Link>
                 </Button>
+                <Button asChild variant="outline" className="border-orange-500/30 text-orange-500 hover:bg-orange-500/10">
+                    <Link to="/utilities">
+                        <Lightbulb className="mr-2 h-4 w-4" />
+                        Kommunal
+                    </Link>
+                </Button>
             </div>
 
-            {/* Today's Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* ═══════════════════════════════════════════════════
+                 TODAY'S STATS (5 cards)
+                ═══════════════════════════════════════════════════ */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <StatCard
                     title="Bugungi tushum"
                     value={daily?.incomeTotal}
                     icon={TrendingUp}
                     isLoading={isDailyLoading}
                     color="text-green-500"
+                    aria-label={`Bugungi tushum: ${formatCurrency(daily?.incomeTotal ?? 0)}`}
                 />
                 <StatCard
                     title="Bugungi xarajat"
@@ -77,6 +85,7 @@ export function DashboardPage() {
                     icon={TrendingDown}
                     isLoading={isDailyLoading}
                     color="text-red-500"
+                    aria-label={`Bugungi xarajat: ${formatCurrency(daily?.expenseTotal ?? 0)}`}
                 />
                 <StatCard
                     title="Bugungi foyda"
@@ -84,6 +93,7 @@ export function DashboardPage() {
                     icon={DollarSign}
                     isLoading={isDailyLoading}
                     color={daily?.net && daily.net >= 0 ? 'text-green-500' : 'text-red-500'}
+                    aria-label={`Bugungi foyda: ${formatCurrency(daily?.net ?? 0)}`}
                 />
                 <StatCard
                     title="Bugungi xaridlar"
@@ -91,11 +101,22 @@ export function DashboardPage() {
                     icon={ShoppingCart}
                     isLoading={isDailyLoading}
                     color="text-blue-500"
+                    aria-label={`Bugungi xaridlar: ${formatCurrency(daily?.purchasesTotal ?? 0)}`}
+                />
+                <StatCard
+                    title="Bugungi kommunal"
+                    value={daily?.utilitiesTotal}
+                    icon={Lightbulb}
+                    isLoading={isDailyLoading}
+                    color="text-orange-500"
+                    aria-label={`Bugungi kommunal: ${formatCurrency(daily?.utilitiesTotal ?? 0)}`}
                 />
             </div>
 
-            {/* Monthly Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* ═══════════════════════════════════════════════════
+                 MONTHLY STATS (5 cards)
+                ═══════════════════════════════════════════════════ */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <StatCard
                     title="Oylik tushum"
                     value={monthly?.incomeTotal}
@@ -103,6 +124,7 @@ export function DashboardPage() {
                     isLoading={isMonthlyLoading}
                     color="text-green-500"
                     subtitle={currentMonth}
+                    aria-label={`Oylik tushum: ${formatCurrency(monthly?.incomeTotal ?? 0)}`}
                 />
                 <StatCard
                     title="Oylik xarajat"
@@ -111,6 +133,7 @@ export function DashboardPage() {
                     isLoading={isMonthlyLoading}
                     color="text-red-500"
                     subtitle={currentMonth}
+                    aria-label={`Oylik xarajat: ${formatCurrency(monthly?.expenseTotal ?? 0)}`}
                 />
                 <StatCard
                     title="Oylik foyda"
@@ -119,6 +142,7 @@ export function DashboardPage() {
                     isLoading={isMonthlyLoading}
                     color={monthly?.net && monthly.net >= 0 ? 'text-green-500' : 'text-red-500'}
                     subtitle={currentMonth}
+                    aria-label={`Oylik foyda: ${formatCurrency(monthly?.net ?? 0)}`}
                 />
                 <StatCard
                     title="Oylik maoshlar"
@@ -127,12 +151,24 @@ export function DashboardPage() {
                     isLoading={isMonthlyLoading}
                     color="text-purple-500"
                     subtitle={currentMonth}
+                    aria-label={`Oylik maoshlar: ${formatCurrency(monthly?.salaryTotal ?? 0)}`}
+                />
+                <StatCard
+                    title="Oylik kommunal"
+                    value={monthly?.utilitiesTotal}
+                    icon={Lightbulb}
+                    isLoading={isMonthlyLoading}
+                    color="text-orange-500"
+                    subtitle={currentMonth}
+                    aria-label={`Oylik kommunal: ${formatCurrency(monthly?.utilitiesTotal ?? 0)}`}
                 />
             </div>
 
-            {/* Charts */}
+            {/* ═══════════════════════════════════════════════════
+                 CHARTS
+                ═══════════════════════════════════════════════════ */}
             <div className="grid gap-6 lg:grid-cols-2">
-                {/* Daily Bar Chart */}
+                {/* Daily Bar Chart — includes Kommunal bar */}
                 {isDailyLoading ? (
                     <ChartSkeleton />
                 ) : daily ? (
@@ -142,6 +178,7 @@ export function DashboardPage() {
                             { name: 'Tushum', value: daily.incomeTotal },
                             { name: 'Xarajat', value: daily.expenseTotal },
                             { name: 'Foyda', value: daily.net },
+                            { name: 'Kommunal', value: daily.utilitiesTotal },
                         ]}
                         xKey="name"
                         bars={[{ dataKey: 'value', name: 'Miqdor', color: 'hsl(var(--primary))' }]}
@@ -150,24 +187,26 @@ export function DashboardPage() {
                     <EmptyChart title="Kunlik hisobot" message="Bugun uchun ma'lumot yo'q" />
                 )}
 
-                {/* Monthly Line Chart */}
+                {/* Monthly Line Chart — Kommunal as orange series */}
                 {isMonthlyLoading ? (
                     <ChartSkeleton />
                 ) : monthly?.dailyBreakdown ? (
                     <LineChartCard
                         title={`Oylik dinamika (${currentMonth})`}
-                        description="Kirim, chiqim va foyda dinamikasi"
+                        description="Kirim, chiqim, foyda va kommunal xarajatlar"
                         data={monthly.dailyBreakdown.map((d) => ({
-                            date: d.date.split('-')[2], // Just the day number
+                            date: d.date.split('-')[2],
                             income: d.income,
                             expense: d.expense,
                             net: d.net,
+                            utilities: d.utilities,
                         }))}
                         xKey="date"
                         areas={[
                             { dataKey: 'income', name: 'Tushum', color: '#22c55e', fillOpacity: 0.1 },
                             { dataKey: 'expense', name: 'Xarajat', color: '#ef4444', fillOpacity: 0.1 },
                             { dataKey: 'net', name: 'Foyda', color: 'hsl(var(--primary))', fillOpacity: 0.2 },
+                            { dataKey: 'utilities', name: 'Kommunal', color: '#f97316', fillOpacity: 0.15 },
                         ]}
                     />
                 ) : (
@@ -175,7 +214,7 @@ export function DashboardPage() {
                 )}
             </div>
 
-            {/* Yearly Bar Chart */}
+            {/* Yearly Bar Chart — includes Kommunal series */}
             <div>
                 {isYearlyLoading ? (
                     <ChartSkeleton height={350} />
@@ -183,16 +222,18 @@ export function DashboardPage() {
                     <BarChartCard
                         title={`Yillik ko'rsatkichlar (${currentYear})`}
                         data={yearly.monthlyBreakdown.map((m) => ({
-                            month: m.month.split('-')[1], // Just the month number
+                            month: m.month.split('-')[1],
                             income: m.income,
                             expense: m.expense,
                             net: m.net,
+                            utilities: m.utilities,
                         }))}
                         xKey="month"
                         bars={[
                             { dataKey: 'income', name: 'Tushum', color: '#22c55e' },
                             { dataKey: 'expense', name: 'Xarajat', color: '#ef4444' },
                             { dataKey: 'net', name: 'Foyda', color: 'hsl(var(--primary))' },
+                            { dataKey: 'utilities', name: 'Kommunal', color: '#f97316' },
                         ]}
                         height={350}
                     />
@@ -212,11 +253,12 @@ interface StatCardProps {
     isLoading: boolean;
     color: string;
     subtitle?: string;
+    'aria-label'?: string;
 }
 
-function StatCard({ title, value, icon: Icon, isLoading, color, subtitle }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, isLoading, color, subtitle, 'aria-label': ariaLabel }: StatCardProps) {
     return (
-        <Card>
+        <Card aria-label={ariaLabel}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div>
                     <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>

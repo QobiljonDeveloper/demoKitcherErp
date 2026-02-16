@@ -56,13 +56,15 @@ export function ReportsPage() {
         fullDate: format(parseISO(day.date), 'dd MMMM', { locale: uz }),
         income: day.income,
         expense: day.expense,
-        profit: day.net
+        profit: day.net,
+        utilities: day.utilities,
     })) || [];
 
     const expenseBreakdown = [
         { name: 'Xaridlar', value: stats?.purchasesTotal || 0, color: '#f59e0b' }, // amber
         { name: 'Maoshlar', value: stats?.salaryTotal || 0, color: '#3b82f6' },   // blue
-        { name: 'Boshqa', value: (stats?.expenseTotal || 0) - (stats?.purchasesTotal || 0) - (stats?.salaryTotal || 0), color: '#ef4444' } // red
+        { name: 'Kommunal', value: stats?.utilitiesTotal || 0, color: '#f97316' }, // orange
+        { name: 'Boshqa', value: Math.max(0, (stats?.expenseTotal || 0) - (stats?.purchasesTotal || 0) - (stats?.salaryTotal || 0) - (stats?.utilitiesTotal || 0)), color: '#ef4444' } // red
     ].filter(i => i.value > 0);
 
     return (
@@ -171,7 +173,8 @@ export function ReportsPage() {
                                 xKey="date"
                                 areas={[
                                     { dataKey: 'income', name: 'Kirim', color: '#22c55e', fillOpacity: 0.2 },
-                                    { dataKey: 'expense', name: 'Chiqim', color: '#ef4444', fillOpacity: 0.2 }
+                                    { dataKey: 'expense', name: 'Chiqim', color: '#ef4444', fillOpacity: 0.2 },
+                                    { dataKey: 'utilities', name: 'Kommunal', color: '#f97316', fillOpacity: 0.15 },
                                 ]}
                                 height={350}
                             />

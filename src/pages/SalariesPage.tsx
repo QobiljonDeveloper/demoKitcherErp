@@ -1,11 +1,9 @@
-import { useState, useMemo } from 'react';
-import { format } from 'date-fns';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { format, parse } from 'date-fns';
 
 import {
     Plus,
     Trash2,
-    ArrowUpDown,
-    MoreHorizontal
 } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,6 +54,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MonthPicker } from '@/components/ui/month-picker';
 
 
 import { ConfirmDialog, EmptyState, ErrorState } from '@/components/common';
@@ -87,6 +86,11 @@ export function SalariesPage() {
         pageIndex: 0,
         pageSize: 10,
     });
+
+    // Reset pagination when month changes
+    useEffect(() => {
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    }, [selectedMonth]);
 
     const { data: salariesData, isLoading: isSalariesLoading, isError, refetch } = useSalaries({
         month: selectedMonth,
@@ -145,20 +149,14 @@ export function SalariesPage() {
         setIsDialogOpen(true);
     };
 
-    const columns: ColumnDef<SalaryPayment>[] = [
+    const handleDelete = useCallback((id: string) => {
+        setSalaryToDelete(id);
+    }, []);
+
+    const columns = useMemo<ColumnDef<SalaryPayment>[]>(() => [
         {
             accessorKey: 'datePaid',
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        Sana
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                )
-            },
+            header: 'Sana',
             cell: ({ row }) => {
                 const date = new Date(row.getValue("datePaid"));
                 return <div className="ml-4">{format(date, 'dd.MM.yyyy')}</div>;
@@ -207,23 +205,26 @@ export function SalariesPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive"
-                        onClick={() => setSalaryToDelete(row.original._id)}
+                        onClick={() => handleDelete(row.original._id)}
                     >
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 );
             },
         },
-    ];
+    ], [handleDelete]);
+
+    const tableData = useMemo(() => salariesData?.data || [], [salariesData?.data]);
 
     const table = useReactTable({
-        data: salariesData?.data || [],
+        data: tableData,
         columns,
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onPaginationChange: setPagination,
+        autoResetPageIndex: false,
         state: {
             sorting,
             pagination,
@@ -253,11 +254,12 @@ export function SalariesPage() {
             {/* Month Selector */}
             <div className="flex items-center gap-2">
                 <Label className="mr-2">Oy bo'yicha saralash:</Label>
-                <Input
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-[180px]"
+                <MonthPicker
+                    date={parse(selectedMonth, 'yyyy-MM', new Date())}
+                    setDate={(date) => {
+                        setSelectedMonth(format(date, 'yyyy-MM'));
+                        setPagination(p => ({ ...p, pageIndex: 0 }));
+                    }}
                 />
             </div>
 
@@ -313,7 +315,7 @@ export function SalariesPage() {
                 </Card>
             </div>
 
-            <div className="rounded-md border bg-card">
+            <div className="rounded-md border bg-card" key={selectedMonth}>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

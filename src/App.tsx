@@ -16,6 +16,7 @@ const EmployeesPage = lazy(() => import('@/pages/EmployeesPage'));
 const SalariesPage = lazy(() => import('@/pages/SalariesPage'));
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const UtilitiesPage = lazy(() => import('@/pages/UtilitiesPage'));
 
 function PageLoader() {
     return (
@@ -110,6 +111,7 @@ function App() {
                 <Route path="/items" element={<ItemsPage />} />
                 <Route path="/stock" element={<StockPage />} />
                 <Route path="/cash" element={<CashPage />} />
+                <Route path="/utilities" element={<UtilitiesPage />} />
                 <Route path="/employees" element={<EmployeesPage />} />
                 <Route path="/salaries" element={<SalariesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />

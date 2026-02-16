@@ -1,6 +1,7 @@
 import { delay } from './mockUtils';
 import { mockMonthlyStats } from '../mocks/stats';
 import { mockStockBalances } from '../mocks/stock';
+import { mockUtilities } from '../mocks/utilities';
 
 export interface DailyStats {
     date: string;
@@ -9,6 +10,7 @@ export interface DailyStats {
     net: number;
     purchasesTotal: number;
     salaryTotal: number;
+    utilitiesTotal: number;
 }
 
 export interface MonthlyStats {
@@ -18,6 +20,7 @@ export interface MonthlyStats {
     net: number;
     purchasesTotal: number;
     salaryTotal: number;
+    utilitiesTotal: number;
     dailyBreakdown: Array<{
         date: string;
         income: number;
@@ -25,6 +28,7 @@ export interface MonthlyStats {
         net: number;
         purchases: number;
         salaries: number;
+        utilities: number;
     }>;
 }
 
@@ -35,6 +39,7 @@ export interface YearlyStats {
     net: number;
     purchasesTotal: number;
     salaryTotal: number;
+    utilitiesTotal: number;
     monthlyBreakdown: Array<{
         month: string;
         income: number;
@@ -42,32 +47,65 @@ export interface YearlyStats {
         net: number;
         purchases: number;
         salaries: number;
+        utilities: number;
     }>;
+}
+
+// ── Helper: sum utility amounts for a date range ────────────
+function sumUtilities(from: string, to: string): number {
+    return mockUtilities
+        .filter((u) => u.date.slice(0, 10) >= from && u.date.slice(0, 10) <= to)
+        .reduce((s, u) => s + u.amount, 0);
+}
+
+function sumUtilitiesForDay(day: string): number {
+    return mockUtilities
+        .filter((u) => u.date.slice(0, 10) === day)
+        .reduce((s, u) => s + u.amount, 0);
 }
 
 export const statsApi = {
     getDaily: async (date: string): Promise<{ success: boolean; data: DailyStats }> => {
         await delay(300);
+        const utilitiesTotal = sumUtilitiesForDay(date);
         return {
             success: true,
             data: {
                 date,
-                incomeTotal: 0,
-                expenseTotal: 0,
-                net: 0,
-                purchasesTotal: 0,
-                salaryTotal: 0
+                incomeTotal: 2_500_000,
+                expenseTotal: 1_200_000 + utilitiesTotal,
+                net: 2_500_000 - (1_200_000 + utilitiesTotal),
+                purchasesTotal: 800_000,
+                salaryTotal: 0,
+                utilitiesTotal,
             }
         };
     },
 
     getMonthly: async (month: string): Promise<{ success: boolean; data: MonthlyStats }> => {
         await delay(500);
-        return { success: true, data: mockMonthlyStats };
+        // Calculate total utilities for the month
+        const monthStart = `${month}-01`;
+        const monthEnd = `${month}-31`;
+        const utilitiesTotal = sumUtilities(monthStart, monthEnd);
+        return {
+            success: true,
+            data: {
+                ...mockMonthlyStats,
+                utilitiesTotal,
+                dailyBreakdown: mockMonthlyStats.dailyBreakdown.map((d) => ({
+                    ...d,
+                    utilities: sumUtilitiesForDay(d.date),
+                })),
+            }
+        };
     },
 
     getYearly: async (year: number): Promise<{ success: boolean; data: YearlyStats }> => {
         await delay(500);
+        const yearStart = `${year}-01-01`;
+        const yearEnd = `${year}-12-31`;
+        const utilitiesTotal = sumUtilities(yearStart, yearEnd);
         return {
             success: true,
             data: {
@@ -77,14 +115,21 @@ export const statsApi = {
                 net: mockMonthlyStats.net * 12,
                 purchasesTotal: mockMonthlyStats.purchasesTotal * 12,
                 salaryTotal: mockMonthlyStats.salaryTotal * 12,
-                monthlyBreakdown: Array.from({ length: 12 }, (_, i) => ({
-                    month: `${year}-${(i + 1).toString().padStart(2, '0')}`,
-                    income: mockMonthlyStats.incomeTotal,
-                    expense: mockMonthlyStats.expenseTotal,
-                    net: mockMonthlyStats.net,
-                    purchases: mockMonthlyStats.purchasesTotal,
-                    salaries: mockMonthlyStats.salaryTotal
-                }))
+                utilitiesTotal,
+                monthlyBreakdown: Array.from({ length: 12 }, (_, i) => {
+                    const m = `${year}-${(i + 1).toString().padStart(2, '0')}`;
+                    const mStart = `${m}-01`;
+                    const mEnd = `${m}-31`;
+                    return {
+                        month: m,
+                        income: mockMonthlyStats.incomeTotal,
+                        expense: mockMonthlyStats.expenseTotal,
+                        net: mockMonthlyStats.net,
+                        purchases: mockMonthlyStats.purchasesTotal,
+                        salaries: mockMonthlyStats.salaryTotal,
+                        utilities: sumUtilities(mStart, mEnd),
+                    };
+                })
             }
         };
     },
